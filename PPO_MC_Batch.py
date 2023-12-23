@@ -1,4 +1,5 @@
-ï»¿
+#20231222 PPO¸ÑMC(¬ù1.1¸U~1.6¸Uepoch)
+#20231222 ¥h°£action_std_init(³sÄò°Ê§@¥Î)
 import os
 import torch
 import torch.nn as nn
@@ -36,7 +37,7 @@ class RolloutBuffer:
 
 
 class ActorCritic(nn.Module):
-    def __init__(self, state_dim, action_dim, action_std_init):
+    def __init__(self, state_dim, action_dim):
         super(ActorCritic, self).__init__()
         self.actor = nn.Sequential(
                         nn.Linear(state_dim, 64),
@@ -78,20 +79,20 @@ class ActorCritic(nn.Module):
         return action_logprobs, state_values, dist_entropy
 
 class PPO:
-    def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, action_std_init=0.6):
+    def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip):
         self.gamma = gamma
         self.eps_clip = eps_clip
         self.K_epochs = K_epochs
         
         self.buffer = RolloutBuffer()
 
-        self.policy = ActorCritic(state_dim, action_dim, action_std_init).to(device)
+        self.policy = ActorCritic(state_dim, action_dim).to(device)
         self.optimizer = torch.optim.Adam([
                         {'params': self.policy.actor.parameters(), 'lr': lr_actor},
                         {'params': self.policy.critic.parameters(), 'lr': lr_critic}
                     ])
 
-        self.policy_old = ActorCritic(state_dim, action_dim, action_std_init).to(device)
+        self.policy_old = ActorCritic(state_dim, action_dim).to(device)
         self.policy_old.load_state_dict(self.policy.state_dict())
         
         self.MseLoss = nn.MSELoss()
@@ -181,7 +182,6 @@ def seed_torch(seed):
 
 ####### initialize environment hyperparameters ######
 env_name = "MountainCar-v0"
-action_std = None
 
 seed = 1
 np.random.seed(seed)
@@ -208,7 +208,7 @@ action_dim = env.action_space.n
 ################# training procedure ################
 
 # initialize a PPO agent
-ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, action_std)
+ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip)
 
 
 num_epochs = 50000
@@ -251,3 +251,6 @@ for i_episode in range(num_epochs):
     if current_ep_reward > -110:
       fileN = './data/'+'E'+str(i_episode)+'_PPOMC_agent.pth'
       torch.save(ppo_agent.policy.actor.state_dict(),fileN)
+
+
+#ppo_agent.policy.critic._modules['0'].weight.detach().numpy()
