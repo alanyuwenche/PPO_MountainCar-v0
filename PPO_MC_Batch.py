@@ -1,5 +1,4 @@
-#20231222 PPO¸ÑMC(¬ù1.1¸U~1.6¸Uepoch)
-#20231222 ¥h°£action_std_init(³sÄò°Ê§@¥Î)
+ï»¿
 import os
 import torch
 import torch.nn as nn
@@ -12,8 +11,8 @@ import gym
 # set device to cpu or cuda
 device = torch.device('cpu')
 
-if(torch.cuda.is_available()): 
-    device = torch.device('cuda:0') 
+if(torch.cuda.is_available()):
+    device = torch.device('cuda:0')
     torch.cuda.empty_cache()
     print("Device set to : " + str(torch.cuda.get_device_name(device)))
 else:
@@ -26,7 +25,7 @@ class RolloutBuffer:
         self.logprobs = []
         self.rewards = []
         self.is_terminals = []
-    
+
 
     def clear(self):
         del self.actions[:]
@@ -48,7 +47,7 @@ class ActorCritic(nn.Module):
                         nn.Softmax(dim=-1)
                     )
 
-    
+
         # critic
         self.critic = nn.Sequential(
                         nn.Linear(state_dim, hidden_dim),
@@ -187,7 +186,7 @@ random.seed(seed)
 seed_torch(seed)
 
 ################ PPO hyperparameters ################
-K_epochs = 40               # update policy for K epochs
+K_epochs = 40               # update policy for K epochs, ex. 5, 15, 30, 40, 80
 eps_clip = 0.2              # clip parameter for PPO
 gamma = 0.99                # discount factor
 
@@ -202,15 +201,14 @@ env = gym.make(env_name)
 # state space dimension
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.n
-#hidden_dim = 128 
-hidden_dim = 64 #20231222 ¸û©ö¦¨¥\
+hidden_dim = 64 
 ################# training procedure ################
 
 # initialize a PPO agent
 ppo_agent = PPO(state_dim, action_dim, hidden_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip)
 
 num_epochs = 50000
-update_epoch = 8
+update_epoch = 5
 maxR = -200
 os.makedirs('./data/', exist_ok=True)
 for i_episode in range(num_epochs):
@@ -245,6 +243,3 @@ for i_episode in range(num_epochs):
     if current_ep_reward > -110:
       fileN = './data/'+'E'+str(i_episode)+'_PPOMC_agent.pth'
       torch.save(ppo_agent.policy.actor.state_dict(),fileN)
-
-
-#ppo_agent.policy.critic._modules['0'].weight.detach().numpy()
